@@ -184,7 +184,7 @@ func uuidToFilePath(uid uuid.UUID) string {
 
 // Get gets details about a node. Returns NoBlobError and UnauthorizedError.
 func (bs *BlobStore) Get(user *auth.User, id uuid.UUID) (*BlobNode, error) {
-	node, nodeuser, err := bs.getNode(user, id)
+	node, nodeuser, err := bs.getNode(user, id, seek, length)
 	if err != nil {
 		return nil, err
 	}
@@ -194,7 +194,7 @@ func (bs *BlobStore) Get(user *auth.User, id uuid.UUID) (*BlobNode, error) {
 	return toBlobNode(node), nil
 }
 
-func (bs *BlobStore) getNode(user *auth.User, id uuid.UUID,
+func (bs *BlobStore) getNode(user *auth.User, id uuid.UUID, seek int, length int,
 ) (*nodestore.Node, *nodestore.User, error) {
 	var nodeuser *nodestore.User
 	if user != nil {
@@ -273,7 +273,7 @@ func (bs *BlobStore) SetNodePublic(user auth.User, id uuid.UUID, public bool,
 
 func (bs *BlobStore) writeok(user auth.User, id uuid.UUID, removeself bool,
 ) (*nodestore.User, *nodestore.Node, error) {
-	node, nodeuser, err := bs.getNode(&user, id)
+	node, nodeuser, err := bs.getNode(&user, id, seek, length)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -370,7 +370,7 @@ func (bs *BlobStore) ChangeOwner(user auth.User, id uuid.UUID, newowner string,
 // DeleteNode deletes the given node.
 // Returns NoBlobError and UnauthorizedError.
 func (bs *BlobStore) DeleteNode(user auth.User, id uuid.UUID) error {
-	node, nodeuser, err := bs.getNode(&user, id)
+	node, nodeuser, err := bs.getNode(&user, id, seek, length)
 	if err != nil {
 		return err
 	}
@@ -389,7 +389,7 @@ func (bs *BlobStore) DeleteNode(user auth.User, id uuid.UUID) error {
 // CopyNode makes a copy of the given node with an empty readers list.
 // Returns NoBlobError and UnauthorizedError.
 func (bs *BlobStore) CopyNode(user auth.User, id uuid.UUID) (*BlobNode, error) {
-	node, nodeuser, err := bs.getNode(&user, id)
+	node, nodeuser, err := bs.getNode(&user, id, seek, length)
 	if err != nil {
 		return nil, err
 	}

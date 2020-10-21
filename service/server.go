@@ -504,13 +504,15 @@ func getNodeID(le *logrus.Entry, w http.ResponseWriter, r *http.Request) (*uuid.
 func (s *Server) getNode(w http.ResponseWriter, r *http.Request) {
 	le := getLogger(r)
 	id, err := getNodeID(le, w, r)
+	seek := -1
+	length := -1
 	if err != nil {
 		return
 	}
 	user := getUser(r)
 	download := download(r.URL)
 	if download != "" {
-		datareader, size, filename, err := s.store.GetFile(user, *id)
+		datareader, size, filename, err := s.store.GetFile(user, *id, seek, length)
 		if err != nil {
 			writeError(le, err, w)
 			return
@@ -526,7 +528,7 @@ func (s *Server) getNode(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("content-type", "application/octet-stream")
 		io.Copy(w, datareader)
 	} else {
-		node, err := s.store.Get(user, *id)
+		node, err := s.store.Get(user, *id, seek, length)
 		if err != nil {
 			writeError(le, err, w)
 			return
@@ -534,6 +536,41 @@ func (s *Server) getNode(w http.ResponseWriter, r *http.Request) {
 		writeNode(w, node)
 	}
 }
+
+// func (s *Server) getNode(w http.ResponseWriter, r *http.Request) {
+// 	le := getLogger(r)
+// 	id, err := getNodeID(le, w, r)
+// 	if err != nil {
+// 		return
+// 	}
+// 	user := getUser(r)
+// 	download := download(r.URL)
+// 	if download != "" {
+// 		datareader, size, filename, err := s.store.GetFile(user, *id)
+// 		if err != nil {
+// 			writeError(le, err, w)
+// 			return
+// 		}
+// 		defer datareader.Close()
+// 		if download == "yes" {
+// 			if filename == "" {
+// 				filename = id.String()
+// 			}
+// 			w.Header().Set("content-disposition", "attachment; filename="+filename)
+// 		}
+// 		w.Header().Set("content-length", strconv.FormatInt(size, 10))
+// 		w.Header().Set("content-type", "application/octet-stream")
+// 		io.Copy(w, datareader)
+// 	} else {
+// 		node, err := s.store.Get(user, *id)
+// 		if err != nil {
+// 			writeError(le, err, w)
+// 			return
+// 		}
+// 		writeNode(w, node)
+// 	}
+// }
+
 
 func download(u *url.URL) string {
 	if _, ok := u.Query()["download"]; ok {
