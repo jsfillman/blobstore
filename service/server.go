@@ -97,6 +97,10 @@ func New(cfg *config.Config, sconf ServerStaticConf) (*Server, error) {
 
 	router.HandleFunc("/node/{id}", s.getNode).Methods(http.MethodGet)
 	router.HandleFunc("/node/{id}/", s.getNode).Methods(http.MethodGet)
+	router.HandleFunc("/node/{id}/{seek}", s.getNode).Methods(http.MethodGet)
+	router.HandleFunc("/node/{id}/{seek}/", s.getNode).Methods(http.MethodGet)
+	router.HandleFunc("/node/{id}/{seek}/{length}", s.getNode).Methods(http.MethodGet)
+	router.HandleFunc("/node/{id}/{seek}/{length}/", s.getNode).Methods(http.MethodGet)
 
 	router.HandleFunc("/node/{id}", s.deleteNode).Methods(http.MethodDelete)
 	router.HandleFunc("/node/{id}/", s.deleteNode).Methods(http.MethodDelete)
@@ -504,15 +508,15 @@ func getNodeID(le *logrus.Entry, w http.ResponseWriter, r *http.Request) (*uuid.
 func (s *Server) getNode(w http.ResponseWriter, r *http.Request) {
 	le := getLogger(r)
 	id, err := getNodeID(le, w, r)
-	seek := -1
-	length := -1
+	// seek := -1
+	// length := -1
 	if err != nil {
 		return
 	}
 	user := getUser(r)
 	download := download(r.URL)
 	if download != "" {
-		datareader, size, filename, err := s.store.GetFile(user, *id, seek, length)
+		datareader, size, filename, err := s.store.GetFile(user, *id)
 		if err != nil {
 			writeError(le, err, w)
 			return
@@ -528,7 +532,7 @@ func (s *Server) getNode(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("content-type", "application/octet-stream")
 		io.Copy(w, datareader)
 	} else {
-		node, err := s.store.Get(user, *id, seek, length)
+		node, err := s.store.Get(user, *id)
 		if err != nil {
 			writeError(le, err, w)
 			return
